@@ -1,7 +1,7 @@
 {
   "displayName": "Editor Tools",
   "author": "Quin Henshaw",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "name": "com.qhenshaw.editortools",
   "documentationUrl": "https://github.com/qhenshaw/editortools",
   "changelogUrl": "https://github.com/qhenshaw/editortools/blob/main/CHANGELOG.md",
