@@ -37,6 +37,12 @@ Add to scene through GameObject => Light => Light Probe Volume
 ```
 Adds any number of customizable volumes to the scene that will raycast against contained surfaces and automatically distribute Light Probes. Recalculatng probe positions can take several minutes in large scenes with high density.
 
+### UCX Collision Importer
+```
+Automatically processes incoming 3D models
+```
+The UCX collision importer mimics Unreal's automatic handling of any meshes inside models named using the ```UCX_``` naming convention and adds mesh colliders to them.
+
 ### Material Creator
 ```
 A materal creator for use with the unified Unity/Unreal pipeline and Uber shaders. This will be of no use outside of my classes.
