@@ -1,5 +1,8 @@
 # Changelog
 
+[1.2.0] - 2023-07-04
+- Added surface normal rotation mode to Prefab Placer
+
 [1.1.0] - 2023-03-03
 - Added Snap to Floor hotkey, Tools => LD Shortcuts => Snap to Floor
 

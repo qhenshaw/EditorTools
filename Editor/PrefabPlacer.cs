@@ -16,7 +16,14 @@ namespace EditorTools.Editor
             Identity,
             Prefab,
             DragDirection,
-            CameraFlattened
+            CameraFlattened,
+            SurfaceNormal
+        }
+
+        private enum CoordinateSpace
+        {
+            World,
+            Local
         }
 
         [System.Serializable]
@@ -38,10 +45,11 @@ namespace EditorTools.Editor
         [BoxGroup("Prefabs"), SerializeField] private string _filter;
         [BoxGroup("Prefabs"), SerializeField, AssetList(CustomFilterMethod = nameof(AssetNameMatch)), InlineEditor] private List<GameObject> _prefabs;
         [BoxGroup("Position"), SerializeField] private Vector3 _positionOffset;
+        [BoxGroup("Position"), SerializeField] private CoordinateSpace _positionOffsetSpace;
         [BoxGroup("Position"), SerializeField] private float _spreadRadius = 0.5f;
         [BoxGroup("Position"), SerializeField] private AnimationCurve _spreadDistribution = new AnimationCurve(new Keyframe(0f, 1f, 0f, 0f), new Keyframe(1f, 0f, -2f, 2f));
         [BoxGroup("Rotation"), SerializeField] private RotationMode _rotationMode;
-        [BoxGroup("Rotation"), ShowIf("_rotationMode", RotationMode.Random), InlineProperty, SerializeField] private RandomRotationRange _randomRotationRange;
+        [BoxGroup("Rotation"), ShowIf("_rotationMode", RotationMode.Random), ShowIf("_rotationMode", RotationMode.SurfaceNormal), InlineProperty, SerializeField] private RandomRotationRange _randomRotationRange;
         [BoxGroup("Rotation"), SerializeField] private Vector3 _rotationOffset;
         [BoxGroup("Scale"), InlineProperty, SerializeField] private RandomScaleRange _randomScaleRange;
         [BoxGroup("Placement"), SerializeField, SceneObjectsOnly] private Transform _parent;
@@ -94,10 +102,10 @@ namespace EditorTools.Editor
 
             HandleUtility.AddDefaultControl(GUIUtility.GetControlID(GetHashCode(), FocusType.Passive));
 
-            if (GetMousePosition(out Vector3 mousePosition))
+            if (GetMousePosition(out Vector3 mousePosition, out Vector3 surfaceNormal, out Vector3 surfaceTangent))
             {
                 Handles.color = Color.white;
-                Handles.DrawWireDisc(mousePosition, Vector3.up, _spreadRadius);
+                Handles.DrawWireDisc(mousePosition, surfaceNormal, _spreadRadius);
                 Handles.Label(mousePosition + Vector3.back * _spreadRadius, _spreadRadius.ToString());
                 int innerRadiusSteps = 50;
                 for (int i = 0; i < innerRadiusSteps; i++)
@@ -106,7 +114,7 @@ namespace EditorTools.Editor
                     float value = _spreadDistribution.Evaluate(progress);
                     if (value <= 0.5f)
                     {
-                        Handles.DrawWireDisc(mousePosition, Vector3.up, progress * _spreadRadius);
+                        Handles.DrawWireDisc(mousePosition, surfaceNormal, progress * _spreadRadius);
                         break;
                     }
                 }
@@ -115,13 +123,13 @@ namespace EditorTools.Editor
                 {
                     Undo.IncrementCurrentGroup();
                     _undoID = Undo.GetCurrentGroup();
-                    Spawn(mousePosition);
+                    Spawn(mousePosition, surfaceNormal, surfaceTangent);
                     Event.current.Use();
                 }
 
                 if (Event.current.type == EventType.MouseDrag && Event.current.button == 0 && Vector3.Distance(_lastSpawnPosition, mousePosition) > _dragDistance)
                 {
-                    Spawn(mousePosition);
+                    Spawn(mousePosition, surfaceNormal, surfaceTangent);
                     Event.current.Use();
                 }
 
@@ -140,7 +148,7 @@ namespace EditorTools.Editor
             return e.type;
         }
 
-        private void Spawn(Vector3 position)
+        private void Spawn(Vector3 position, Vector3 normal, Vector3 tangent)
         {
             if (_prefabs == null || _prefabs.Count < 1) return;
 
@@ -150,12 +158,12 @@ namespace EditorTools.Editor
             Undo.IncrementCurrentGroup();
 
             Quaternion rotation = Quaternion.identity;
+            float x = Random.Range(_randomRotationRange.X.x, _randomRotationRange.X.y);
+            float y = Random.Range(_randomRotationRange.Y.x, _randomRotationRange.Y.y);
+            float z = Random.Range(_randomRotationRange.Z.x, _randomRotationRange.Z.y);
             switch (_rotationMode)
             {
                 case RotationMode.Random:
-                    float x = Random.Range(_randomRotationRange.X.x, _randomRotationRange.X.y);
-                    float y = Random.Range(_randomRotationRange.Y.x, _randomRotationRange.Y.y);
-                    float z = Random.Range(_randomRotationRange.Z.x, _randomRotationRange.Z.y);
                     rotation = Quaternion.Euler(x, y, z);
                     break;
                 case RotationMode.Identity:
@@ -174,12 +182,23 @@ namespace EditorTools.Editor
                     cameraDir.y = 0f;
                     rotation = Quaternion.LookRotation(cameraDir.normalized);
                     break;
+                case RotationMode.SurfaceNormal:
+                    rotation = Quaternion.LookRotation(tangent, normal);
+                    rotation *= Quaternion.Euler(x, y, z);
+                    break;
             }
             rotation *= Quaternion.Euler(_rotationOffset);
             GameObject instantiated = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            instantiated.transform.rotation = rotation;
             float distribution = _spreadDistribution.Evaluate(Random.value);
+            Vector3 offset = _positionOffset;
             Vector3 spreadOffset = Vector3.ClampMagnitude(new Vector3(Random.Range(-1f, 1f), 0f, Random.Range(-1f, 1f)), 1f) * _spreadRadius * distribution;
-            instantiated.transform.SetPositionAndRotation(position + _positionOffset + spreadOffset, rotation);
+            if (_positionOffsetSpace == CoordinateSpace.Local)
+            {
+                offset = instantiated.transform.forward * _positionOffset.z + instantiated.transform.right * _positionOffset.x + instantiated.transform.up * _positionOffset.y;
+                spreadOffset = instantiated.transform.forward * spreadOffset.x + instantiated.transform.right * spreadOffset.z;
+            }
+            instantiated.transform.position = position + offset + spreadOffset;
             Vector3 scale = new Vector3(Random.Range(_randomScaleRange.X.x, _randomScaleRange.X.y) * instantiated.transform.localScale.x,
                                         Random.Range(_randomScaleRange.Y.x, _randomScaleRange.Y.y) * instantiated.transform.localScale.y,
                                         Random.Range(_randomScaleRange.Z.x, _randomScaleRange.Z.y)) * instantiated.transform.localScale.z;
@@ -191,7 +210,7 @@ namespace EditorTools.Editor
             _lastSpawnPosition = position;
         }
 
-        private bool GetMousePosition(out Vector3 position)
+        private bool GetMousePosition(out Vector3 position, out Vector3 normal, out Vector3 tangent)
         {
             Ray ray = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
             RaycastHit hit;
@@ -199,11 +218,15 @@ namespace EditorTools.Editor
             if (Physics.Raycast(ray, out hit, Mathf.Infinity, _layerMask))
             {
                 position = hit.point;
+                normal = hit.normal;
+                tangent = Vector3.Cross(normal, ray.direction);
                 if (_staticOnly && !GameObjectUtility.AreStaticEditorFlagsSet(hit.transform.gameObject, StaticEditorFlags.BatchingStatic)) return false;
                 return true;
             }
 
             position = Vector3.zero;
+            normal = Vector3.up;
+            tangent = Vector3.right;
             return false;
         }
     }
