@@ -1,4 +1,8 @@
 # Changelog
+[1.3.0] - 2023-07-12
+- Added uniform random scale option
+- Fixed issue with random scale Z not working correctly
+- Fixed random rotation sliders not showing
 
 [1.2.0] - 2023-07-04
 - Added surface normal rotation mode to Prefab Placer

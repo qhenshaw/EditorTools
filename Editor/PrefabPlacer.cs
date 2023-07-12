@@ -5,9 +5,11 @@ using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace EditorTools.Editor
 {
+    [ExecuteAlways]
     public class PrefabPlacer : OdinEditorWindow
     {
         private enum RotationMode
@@ -24,6 +26,12 @@ namespace EditorTools.Editor
         {
             World,
             Local
+        }
+
+        private enum ScaleMode
+        {
+            Uniform,
+            Individual
         }
 
         [System.Serializable]
@@ -49,14 +57,20 @@ namespace EditorTools.Editor
         [BoxGroup("Position"), SerializeField] private float _spreadRadius = 0.5f;
         [BoxGroup("Position"), SerializeField] private AnimationCurve _spreadDistribution = new AnimationCurve(new Keyframe(0f, 1f, 0f, 0f), new Keyframe(1f, 0f, -2f, 2f));
         [BoxGroup("Rotation"), SerializeField] private RotationMode _rotationMode;
-        [BoxGroup("Rotation"), ShowIf("_rotationMode", RotationMode.Random), ShowIf("_rotationMode", RotationMode.SurfaceNormal), InlineProperty, SerializeField] private RandomRotationRange _randomRotationRange;
+        [BoxGroup("Rotation"), ShowIf("ShowRandomRotation"), InlineProperty, SerializeField] private RandomRotationRange _randomRotationRange;
         [BoxGroup("Rotation"), SerializeField] private Vector3 _rotationOffset;
-        [BoxGroup("Scale"), InlineProperty, SerializeField] private RandomScaleRange _randomScaleRange;
+        [BoxGroup("Scale"), SerializeField] private ScaleMode _scaleMode = ScaleMode.Uniform;
+        [BoxGroup("Scale"), InlineProperty, SerializeField, HideIf("IsUniformScale")] private RandomScaleRange _randomScaleRange;
+        [BoxGroup("Scale"), InlineProperty, SerializeField, MinMaxSlider(0f, 10f, true), ShowIf("IsUniformScale")] private Vector2 _uniformRandomScaleRange = new Vector2(1f, 1f);
         [BoxGroup("Placement"), SerializeField, SceneObjectsOnly] private Transform _parent;
         [BoxGroup("Placement"), SerializeField] private LayerMask _layerMask = 1 << 0;
         [BoxGroup("Placement"), SerializeField] private bool _staticOnly = false;
         [BoxGroup("Placement"), SerializeField] private float _dragDistance = 2f;
+        [BoxGroup("Placement"), SerializeField] private int _spawnCount = 1;
+        [BoxGroup("Physics (Experimental")] private bool _simulate;
 
+        private bool IsUniformScale => _scaleMode == ScaleMode.Uniform;
+        private bool ShowRandomRotation => _rotationMode == RotationMode.Random || _rotationMode == RotationMode.SurfaceNormal;
         private bool _controlDown;
         private bool _shiftDown;
         private Vector3 _lastSpawnPosition;
@@ -123,13 +137,19 @@ namespace EditorTools.Editor
                 {
                     Undo.IncrementCurrentGroup();
                     _undoID = Undo.GetCurrentGroup();
-                    Spawn(mousePosition, surfaceNormal, surfaceTangent);
+                    for (int i = 0; i < _spawnCount; i++)
+                    {
+                        Spawn(mousePosition, surfaceNormal, surfaceTangent);
+                    }
                     Event.current.Use();
                 }
 
                 if (Event.current.type == EventType.MouseDrag && Event.current.button == 0 && Vector3.Distance(_lastSpawnPosition, mousePosition) > _dragDistance)
                 {
-                    Spawn(mousePosition, surfaceNormal, surfaceTangent);
+                    for (int i = 0; i < _spawnCount; i++)
+                    {
+                        Spawn(mousePosition, surfaceNormal, surfaceTangent);
+                    }
                     Event.current.Use();
                 }
 
@@ -138,6 +158,11 @@ namespace EditorTools.Editor
                     Undo.CollapseUndoOperations(_undoID);
                     Event.current.Use();
                 }
+            }
+
+            if(_simulate)
+            {
+                Physics.Simulate(Time.deltaTime);
             }
         }
 
@@ -199,9 +224,18 @@ namespace EditorTools.Editor
                 spreadOffset = instantiated.transform.forward * spreadOffset.x + instantiated.transform.right * spreadOffset.z;
             }
             instantiated.transform.position = position + offset + spreadOffset;
-            Vector3 scale = new Vector3(Random.Range(_randomScaleRange.X.x, _randomScaleRange.X.y) * instantiated.transform.localScale.x,
+            Vector3 scale = Vector3.one;
+            switch (_scaleMode)
+            {
+                case ScaleMode.Uniform:
+                    scale = Vector3.one * Random.Range(_uniformRandomScaleRange.x, _uniformRandomScaleRange.y);
+                    break;
+                case ScaleMode.Individual:
+                    scale = new Vector3(Random.Range(_randomScaleRange.X.x, _randomScaleRange.X.y) * instantiated.transform.localScale.x,
                                         Random.Range(_randomScaleRange.Y.x, _randomScaleRange.Y.y) * instantiated.transform.localScale.y,
-                                        Random.Range(_randomScaleRange.Z.x, _randomScaleRange.Z.y)) * instantiated.transform.localScale.z;
+                                        Random.Range(_randomScaleRange.Z.x, _randomScaleRange.Z.y) * instantiated.transform.localScale.z);
+                    break;
+            }
             instantiated.transform.localScale = scale;
             instantiated.transform.SetParent(_parent);
 
@@ -228,6 +262,21 @@ namespace EditorTools.Editor
             normal = Vector3.up;
             tangent = Vector3.right;
             return false;
+        }
+
+        [Button("Simulate Selected")]
+        private void SimulateSelected()
+        {
+            var selection = from go in Selection.gameObjects
+                            let rb = go.GetComponent<Rigidbody>()
+                            where rb != null
+                            select rb;
+
+            Rigidbody[] rigidbodies = selection.ToArray();
+            Debug.Log(rigidbodies.Length);
+
+            _simulate = !_simulate;
+            Physics.simulationMode = _simulate ? SimulationMode.Script : SimulationMode.FixedUpdate;
         }
     }
 }
