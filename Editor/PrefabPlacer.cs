@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using static UnityEngine.GraphicsBuffer;
 
 namespace EditorTools.Editor
 {
@@ -140,6 +141,7 @@ namespace EditorTools.Editor
                     for (int i = 0; i < _spawnCount; i++)
                     {
                         Spawn(mousePosition, surfaceNormal, surfaceTangent);
+
                     }
                     Event.current.Use();
                 }
@@ -173,7 +175,25 @@ namespace EditorTools.Editor
             return e.type;
         }
 
-        private void Spawn(Vector3 position, Vector3 normal, Vector3 tangent)
+        private void Spawn(Vector3 position)
+        {
+            Vector2 guiPoint = HandleUtility.WorldToGUIPoint(position);
+            Ray ray = HandleUtility.GUIPointToWorldRay(guiPoint);
+            RaycastHit hit;
+
+            if (Physics.Raycast(ray, out hit, Mathf.Infinity, _layerMask))
+            {
+                Vector3 hitPosition = hit.point;
+                Vector3 normal = hit.normal;
+                Vector3 tangent = Vector3.Cross(normal, ray.direction);
+                if (!_staticOnly || (_staticOnly && !GameObjectUtility.AreStaticEditorFlagsSet(hit.transform.gameObject, StaticEditorFlags.BatchingStatic)))
+                {
+                    Spawn(hitPosition, normal, tangent);
+                }
+            }
+        }
+
+        private void Spawn(Vector3 centerPosition, Vector3 normal, Vector3 tangent)
         {
             if (_prefabs == null || _prefabs.Count < 1) return;
 
@@ -181,6 +201,30 @@ namespace EditorTools.Editor
             if (prefab == null) return;
 
             Undo.IncrementCurrentGroup();
+
+            Vector3 forward = -Vector3.Cross(normal, tangent);
+            Vector3 right = tangent;
+            Vector3 up = normal;
+
+            float distribution = _spreadDistribution.Evaluate(Random.value);
+            Vector3 offset = _positionOffset;
+            Vector3 spreadOffset = Vector3.ClampMagnitude(new Vector3(Random.Range(-1f, 1f), 0f, Random.Range(-1f, 1f)), 1f) * _spreadRadius * distribution;
+            spreadOffset = forward * spreadOffset.x + right * spreadOffset.z;
+            if (_positionOffsetSpace == CoordinateSpace.Local)
+            {
+                offset = forward * _positionOffset.z + right * _positionOffset.x + up * _positionOffset.y;
+            }
+            Vector3 spawnPosition = centerPosition + offset + spreadOffset;
+            if (GetPosition(spawnPosition, out Vector3 pos, out Vector3 norm, out Vector3 tang))
+            {
+                spawnPosition = pos;
+                normal = norm;
+                tangent = tang;
+            }
+            else
+            {
+                Debug.Log("miss");
+            }
 
             Quaternion rotation = Quaternion.identity;
             float x = Random.Range(_randomRotationRange.X.x, _randomRotationRange.X.y);
@@ -198,7 +242,7 @@ namespace EditorTools.Editor
                     rotation = prefab.transform.rotation;
                     break;
                 case RotationMode.DragDirection:
-                    Vector3 dragDir = (position - _lastSpawnPosition).normalized;
+                    Vector3 dragDir = (centerPosition - _lastSpawnPosition).normalized;
                     rotation = Quaternion.LookRotation(dragDir);
                     break;
                 case RotationMode.CameraFlattened:
@@ -213,17 +257,7 @@ namespace EditorTools.Editor
                     break;
             }
             rotation *= Quaternion.Euler(_rotationOffset);
-            GameObject instantiated = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-            instantiated.transform.rotation = rotation;
-            float distribution = _spreadDistribution.Evaluate(Random.value);
-            Vector3 offset = _positionOffset;
-            Vector3 spreadOffset = Vector3.ClampMagnitude(new Vector3(Random.Range(-1f, 1f), 0f, Random.Range(-1f, 1f)), 1f) * _spreadRadius * distribution;
-            if (_positionOffsetSpace == CoordinateSpace.Local)
-            {
-                offset = instantiated.transform.forward * _positionOffset.z + instantiated.transform.right * _positionOffset.x + instantiated.transform.up * _positionOffset.y;
-                spreadOffset = instantiated.transform.forward * spreadOffset.x + instantiated.transform.right * spreadOffset.z;
-            }
-            instantiated.transform.position = position + offset + spreadOffset;
+
             Vector3 scale = Vector3.one;
             switch (_scaleMode)
             {
@@ -231,17 +265,21 @@ namespace EditorTools.Editor
                     scale = Vector3.one * Random.Range(_uniformRandomScaleRange.x, _uniformRandomScaleRange.y);
                     break;
                 case ScaleMode.Individual:
-                    scale = new Vector3(Random.Range(_randomScaleRange.X.x, _randomScaleRange.X.y) * instantiated.transform.localScale.x,
-                                        Random.Range(_randomScaleRange.Y.x, _randomScaleRange.Y.y) * instantiated.transform.localScale.y,
-                                        Random.Range(_randomScaleRange.Z.x, _randomScaleRange.Z.y) * instantiated.transform.localScale.z);
+                    scale = new Vector3(Random.Range(_randomScaleRange.X.x, _randomScaleRange.X.y) * prefab.transform.localScale.x,
+                                        Random.Range(_randomScaleRange.Y.x, _randomScaleRange.Y.y) * prefab.transform.localScale.y,
+                                        Random.Range(_randomScaleRange.Z.x, _randomScaleRange.Z.y) * prefab.transform.localScale.z);
                     break;
             }
+
+            GameObject instantiated = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            instantiated.transform.position = spawnPosition;
+            instantiated.transform.rotation = rotation;
             instantiated.transform.localScale = scale;
             instantiated.transform.SetParent(_parent);
 
             Undo.RegisterCreatedObjectUndo(instantiated, "Place prefab");
 
-            _lastSpawnPosition = position;
+            _lastSpawnPosition = centerPosition;
         }
 
         private bool GetMousePosition(out Vector3 position, out Vector3 normal, out Vector3 tangent)
@@ -254,6 +292,29 @@ namespace EditorTools.Editor
                 position = hit.point;
                 normal = hit.normal;
                 tangent = Vector3.Cross(normal, ray.direction);
+                if (_staticOnly && !GameObjectUtility.AreStaticEditorFlagsSet(hit.transform.gameObject, StaticEditorFlags.BatchingStatic)) return false;
+                return true;
+            }
+
+            position = Vector3.zero;
+            normal = Vector3.up;
+            tangent = Vector3.right;
+            return false;
+        }
+
+        private bool GetPosition(Vector3 worldPos, out Vector3 position, out Vector3 normal, out Vector3 tangent)
+        {
+            Vector2 guiPosition = HandleUtility.WorldToGUIPointWithDepth(worldPos);
+            Ray ray = HandleUtility.GUIPointToWorldRay(guiPosition);
+            RaycastHit hit;
+
+            if (Physics.Raycast(ray, out hit, Mathf.Infinity, _layerMask))
+            {
+                position = hit.point;
+                normal = hit.normal;
+                tangent = Vector3.Cross(normal, ray.direction);
+                Debug.DrawRay(position, normal, Color.green, 5f);
+                Debug.DrawRay(position, tangent, Color.red);
                 if (_staticOnly && !GameObjectUtility.AreStaticEditorFlagsSet(hit.transform.gameObject, StaticEditorFlags.BatchingStatic)) return false;
                 return true;
             }

@@ -1,4 +1,8 @@
 # Changelog
+
+[1.4.0] - 2023-07-12
+- Added individual raycasts for spawn positions within spread distance for better placement
+
 [1.3.0] - 2023-07-12
 - Added uniform random scale option
 - Fixed issue with random scale Z not working correctly
