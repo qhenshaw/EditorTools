@@ -1,6 +1,10 @@
 # Changelog
 
-[1.4.0] - 2023-07-12
+[1.4.1] - 2023-08-03
+- Removed debug draw lines
+- Hid physics sim button until it's working
+
+[1.4.0] - 2023-08-01
 - Added individual raycasts for spawn positions within spread distance for better placement
 
 [1.3.0] - 2023-07-12

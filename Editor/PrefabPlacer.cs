@@ -221,10 +221,6 @@ namespace EditorTools.Editor
                 normal = norm;
                 tangent = tang;
             }
-            else
-            {
-                Debug.Log("miss");
-            }
 
             Quaternion rotation = Quaternion.identity;
             float x = Random.Range(_randomRotationRange.X.x, _randomRotationRange.X.y);
@@ -313,8 +309,6 @@ namespace EditorTools.Editor
                 position = hit.point;
                 normal = hit.normal;
                 tangent = Vector3.Cross(normal, ray.direction);
-                Debug.DrawRay(position, normal, Color.green, 5f);
-                Debug.DrawRay(position, tangent, Color.red);
                 if (_staticOnly && !GameObjectUtility.AreStaticEditorFlagsSet(hit.transform.gameObject, StaticEditorFlags.BatchingStatic)) return false;
                 return true;
             }
@@ -325,7 +319,7 @@ namespace EditorTools.Editor
             return false;
         }
 
-        [Button("Simulate Selected")]
+        // [Button("Simulate Selected")]
         private void SimulateSelected()
         {
             var selection = from go in Selection.gameObjects
