@@ -214,7 +214,7 @@ namespace EditorTools.Editor
             {
                 offset = forward * _positionOffset.z + right * _positionOffset.x + up * _positionOffset.y;
             }
-            Vector3 spawnPosition = centerPosition + offset + spreadOffset;
+            Vector3 spawnPosition = centerPosition + spreadOffset;
             if (GetPosition(spawnPosition, out Vector3 pos, out Vector3 norm, out Vector3 tang))
             {
                 spawnPosition = pos;
@@ -268,7 +268,7 @@ namespace EditorTools.Editor
             }
 
             GameObject instantiated = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-            instantiated.transform.position = spawnPosition;
+            instantiated.transform.position = spawnPosition + offset;
             instantiated.transform.rotation = rotation;
             instantiated.transform.localScale = scale;
             instantiated.transform.SetParent(_parent);

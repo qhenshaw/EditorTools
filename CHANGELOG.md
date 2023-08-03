@@ -1,5 +1,8 @@
 # Changelog
 
+[1.4.2] - 2023-08-03
+- Fixed offset position not working
+
 [1.4.1] - 2023-08-03
 - Removed debug draw lines
 - Hid physics sim button until it's working
