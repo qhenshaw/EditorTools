@@ -1,12 +1,15 @@
 #if ODIN_INSPECTOR
-
-using Sirenix.OdinInspector.Editor;
 using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 using System.Linq;
-using static UnityEngine.GraphicsBuffer;
+
+#if UNITY_EDITOR
+using Sirenix.OdinInspector.Editor;
+using UnityEditor.SceneManagement;
+#endif
 
 namespace EditorTools.Editor
 {
@@ -68,7 +71,7 @@ namespace EditorTools.Editor
         [BoxGroup("Placement"), SerializeField] private bool _staticOnly = false;
         [BoxGroup("Placement"), SerializeField] private float _dragDistance = 2f;
         [BoxGroup("Placement"), SerializeField] private int _spawnCount = 1;
-        [BoxGroup("Physics (Experimental")] private bool _simulate;
+        [BoxGroup("Physics (Experimental)")] private bool _simulateSpawned;
 
         private bool IsUniformScale => _scaleMode == ScaleMode.Uniform;
         private bool ShowRandomRotation => _rotationMode == RotationMode.Random || _rotationMode == RotationMode.SurfaceNormal;
@@ -76,6 +79,7 @@ namespace EditorTools.Editor
         private bool _shiftDown;
         private Vector3 _lastSpawnPosition;
         private int _undoID;
+        private bool _simulating;
 
         [MenuItem("Tools/Prefab Placer", false, 2000)]
         private static void OpenWindow()
@@ -160,11 +164,6 @@ namespace EditorTools.Editor
                     Undo.CollapseUndoOperations(_undoID);
                     Event.current.Use();
                 }
-            }
-
-            if(_simulate)
-            {
-                Physics.Simulate(Time.deltaTime);
             }
         }
 
@@ -319,20 +318,65 @@ namespace EditorTools.Editor
             return false;
         }
 
-        // [Button("Simulate Selected")]
-        private void SimulateSelected()
+#if UNITY_EDITOR
+
+        private struct EditorPhysicsState
         {
-            var selection = from go in Selection.gameObjects
-                            let rb = go.GetComponent<Rigidbody>()
-                            where rb != null
-                            select rb;
-
-            Rigidbody[] rigidbodies = selection.ToArray();
-            Debug.Log(rigidbodies.Length);
-
-            _simulate = !_simulate;
-            Physics.simulationMode = _simulate ? SimulationMode.Script : SimulationMode.FixedUpdate;
+            public Rigidbody Rigidbody;
+            public bool IsKinematic;
         }
+
+        private List<EditorPhysicsState> _editorPhysicsStates = new List<EditorPhysicsState>();
+
+        [HideIf("_simulating")]
+        [BoxGroup("Physics (Experimental)")]
+        [Button("Simulate Target"), GUIColor(0.5f, 1f, 0.5f)]
+        private void SimulateTarget()
+        {
+            List<Rigidbody> toSimulate = new List<Rigidbody>();
+            foreach (GameObject gameObject in Selection.gameObjects)
+            {
+                Rigidbody[] childrenRB = gameObject.GetComponentsInChildren<Rigidbody>();
+                toSimulate.AddRange(childrenRB);
+            }
+            List<Rigidbody> allRBs = FindObjectsOfType<Rigidbody>().ToList();
+            foreach (Rigidbody rb in toSimulate)
+            {
+                allRBs.Remove(rb);
+            }
+            foreach (Rigidbody rigidbody in allRBs)
+            {
+                _editorPhysicsStates.Add(new EditorPhysicsState { Rigidbody = rigidbody, IsKinematic = rigidbody.isKinematic });
+                rigidbody.isKinematic = true;
+            }
+
+            Physics.simulationMode = SimulationMode.Script;
+            _simulating = true;
+        }
+
+        [ShowIf("_simulating")]
+        [BoxGroup("Physics (Experimental)")]
+        [Button("Stop Simulation"), GUIColor(1f, 0.5f, 0.5f)]
+        private void StopSimulation()
+        {
+            foreach(EditorPhysicsState eps in _editorPhysicsStates)
+            {
+                if(eps.Rigidbody.isKinematic != eps.IsKinematic) eps.Rigidbody.isKinematic = eps.IsKinematic;
+            }
+
+            _editorPhysicsStates.Clear();
+            _simulating = false;
+            Physics.simulationMode = SimulationMode.FixedUpdate;
+        }
+
+        private void Update()
+        {
+            if (_simulating)
+            {
+                Physics.Simulate(Time.deltaTime);
+            }
+        }
+#endif
     }
 }
 

@@ -1,5 +1,8 @@
 # Changelog
 
+[1.5.0] - 2023-08-03
+- Added editor-mode physics sim option
+
 [1.4.2] - 2023-08-03
 - Fixed offset position not working
 
