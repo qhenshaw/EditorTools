@@ -1,5 +1,9 @@
 # Changelog
 
+[1.5.1] - 2023-10-25
+- Fixed material creator not assigning base color
+- Fixed snap to floor not sorting by nearest collision
+
 [1.5.0] - 2023-08-03
 - Added editor-mode physics sim option
 
