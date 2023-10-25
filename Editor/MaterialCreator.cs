@@ -15,7 +15,7 @@ namespace EditorTools.Editor
 
         private static string[] _texurePatterns = new[] { "basecolor", "normaldx", "roughaometal" };
         private static string[] _textureNames = new[] { "Base Color", "Normal Map", "Mask Map" };
-        private static string[] _parameterNames = new[] { "_BaseColor", "_Normal", "_Mask" };
+        private static string[] _parameterNames = new[] { "_MainTex", "_Normal", "_Mask" };
 
         [MenuItem("Assets/Create/Art Pipeline/Create UberBakedSimple material", false, 1)]
         public static void CreateUberBakedSimpleMaterial()
