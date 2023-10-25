@@ -35,13 +35,20 @@ namespace EditorTools.Editor
 
             Ray ray = new Ray(lowestCenter, Vector3.down);
             RaycastHit[] hits = Physics.RaycastAll(ray, Mathf.Infinity);
+            float shortest = Mathf.Infinity;
             foreach (RaycastHit hit in hits)
             {
                 if (hit.collider.transform.IsChildOf(selected.transform)) continue;
 
                 float diff = lowestCenter.y - hit.point.y;
+                if(diff < shortest) shortest = diff;
+                
+            }
+
+            if(shortest < Mathf.Infinity)
+            {
                 Undo.RegisterFullObjectHierarchyUndo(selected, "Snap to Floor");
-                selected.transform.position += Vector3.down * diff;
+                selected.transform.position += Vector3.down * shortest;
             }
         }
     }
