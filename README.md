@@ -5,7 +5,8 @@
 This package comes with several useful tools focused on organization, level design, and lighting.
 
 ## System Requirements
-Unity 2021.3+. Will likely work on earlier versions but this is the version I tested with.
+Unity 2021.3+. Will likely work on earlier versions but this is the version I tested with. 
+Currently requires Odin Inspector for custom editor windows, may remove requirement in the future.
 
 ## Installation
 Use the Package Manager and use Add package from git URL, using the following: 
@@ -49,3 +50,10 @@ A materal creator for use with the unified Unity/Unreal pipeline and Uber shader
 ```
 Select the BaseColor/PackMap/NormalMap textures in the project view and create the proper material through:  
 ```Right Click => Create => Art Pipeline => [Material]```
+
+### Additive Scene Manager
+```
+A helper component for working with multiple additive scenes. Automatically load scenes in the editor, and in playmode/builds.
+Add an AdditiveSceneManager to your scene through the right-click menu, then select all required scenes from the dropdown.
+Scenes will load automatically in the editor and during Awake in play mode.
+```
