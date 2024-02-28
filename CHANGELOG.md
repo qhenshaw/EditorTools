@@ -1,6 +1,6 @@
 # Changelog
 
-[1.5.1] - 2024-02-27
+[2.0.0] - 2024-02-27
 - Removed light probe volume in favor of new APV lighting method
 - Added Additive Scene Manager for handling multi-scene setups
 
