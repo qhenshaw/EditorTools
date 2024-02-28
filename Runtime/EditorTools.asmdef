@@ -1,6 +1,6 @@
 {
-    "name": "EditorTools.Runtime",
-    "rootNamespace": "EditorTools.Runtime",
+    "name": "EditorTools",
+    "rootNamespace": "EditorTools",
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],

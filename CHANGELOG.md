@@ -1,5 +1,9 @@
 # Changelog
 
+[1.5.1] - 2024-02-27
+- Removed light probe volume in favor of new APV lighting method
+- Added Additive Scene Manager for handling multi-scene setups
+
 [1.5.1] - 2023-10-25
 - Fixed material creator not assigning base color
 - Fixed snap to floor not sorting by nearest collision
