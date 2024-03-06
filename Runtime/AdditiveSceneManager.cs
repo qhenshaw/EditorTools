@@ -83,11 +83,10 @@ namespace EditorTools
             return UnityEditor.AssetDatabase.FindAssets("t:Scene")
                 .Select(x => UnityEditor.AssetDatabase.GUIDToAssetPath(x)).FirstOrDefault();
         }
-#endif
 
         private void SetExpanded(Scene scene, bool expand)
         {
-#if UNITY_EDITOR
+
             foreach (var window in Resources.FindObjectsOfTypeAll<SearchableEditorWindow>())
             {
                 if (window.GetType().Name != "SceneHierarchyWindow")
@@ -118,6 +117,7 @@ namespace EditorTools
                 var sceneHandle = field.GetValue(scene);
                 method.Invoke(window, new[] { sceneHandle, expand });
             }
+
         }
 #endif
     }
