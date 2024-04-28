@@ -1,5 +1,11 @@
 # Changelog
 
+[2.2.0] - 2024-04-28
+- Added modified project zip export menu option from Jonathan Tremblay: https://github.com/JonathanTremblay/UnityExportToZip
+
+[2.1.0] - 2024-03-09
+- Added helper method for wrapping geo with Reflection Probes
+
 [2.0.0] - 2024-02-27
 - Removed light probe volume in favor of new APV lighting method
 - Added Additive Scene Manager for handling multi-scene setups
