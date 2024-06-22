@@ -1,5 +1,8 @@
 # Changelog
 
+[2.3.0] - 2024-06-22
+- Added HideChildren component
+
 [2.2.0] - 2024-04-28
 - Added modified project zip export menu option from Jonathan Tremblay: https://github.com/JonathanTremblay/UnityExportToZip
 
