@@ -9,30 +9,14 @@ namespace EditorTools.Editor
 {
     public class MaterialCreator
     {
-        private static string _uberBakedSimpleShaderName = "VFS/UberBakedSimple";
-        private static string _uberBakedShaderName = "VFS/UberBaked";
-        private static string _uberTiledShaderName = "VFS/UberTiled";
-
-        private static string[] _texurePatterns = new[] { "basecolor", "normaldx", "roughaometal" };
+        private static string[] _texurePatterns = new[] { "basecolor", "normaldx" };
         private static string[] _textureNames = new[] { "Base Color", "Normal Map", "Mask Map" };
         private static string[] _parameterNames = new[] { "_MainTex", "_Normal", "_Mask" };
 
-        [MenuItem("Assets/Create/Art Pipeline/Create UberBakedSimple material", false, 1)]
-        public static void CreateUberBakedSimpleMaterial()
+        [MenuItem("Assets/Create/Uber material from textures", false, 1)]
+        public static void CreateUberMaterial()
         {
-            CreateUberMaterial(_uberBakedSimpleShaderName);
-        }
-
-        [MenuItem("Assets/Create/Art Pipeline/Create UberBaked material", false, 2)]
-        public static void CreateUberBakedMaterial()
-        {
-            CreateUberMaterial(_uberBakedShaderName);
-        }
-
-        [MenuItem("Assets/Create/Art Pipeline/Create UberTiled material", false, 2)]
-        public static void CreateUberTiledMaterial()
-        {
-            CreateUberMaterial(_uberTiledShaderName);
+            CreateUberMaterial("VFS/Uber");
         }
 
         private static void CreateUberMaterial(string shaderName)
@@ -52,6 +36,11 @@ namespace EditorTools.Editor
                 {
                     if (selectedTextures[j].name.ToLower().Contains(_texurePatterns[i])) textures[i] = selectedTextures[j];
                 }
+            }
+
+            for (int i = 0; i < selectedTextures.Length; i++)
+            {
+                if (CheckMaskMap(selectedTextures[i])) textures[2] = selectedTextures[i];
             }
 
             string output = $"Textures found:{Environment.NewLine}";
@@ -109,6 +98,22 @@ namespace EditorTools.Editor
             }
 
             Debug.Log($"Material created: {material}", material);
+        }
+
+        private static bool CheckMaskMap(Texture texture)
+        {
+            string[] channelNames = new[] { "height", "metal", "emiss", "rough", "smooth", "ao", "occlu"};
+            
+            int successTarget = 3;
+            int successCount = 0;
+            
+            for (int i = 0; i < channelNames.Length; i++)
+            {
+                string channel = channelNames[i];
+                if(texture.name.ToLower().Contains(channel)) successCount++;
+            }
+
+            return successCount >= successTarget;
         }
     }
 }
