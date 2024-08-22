@@ -1,5 +1,8 @@
 # Changelog
 
+[2.5.0] - 2024-06-22
+- Added SceneLoadTrigger component that allows for runtime async load/unload of scenes
+
 [2.3.0] - 2024-06-22
 - Added HideChildren component
 
