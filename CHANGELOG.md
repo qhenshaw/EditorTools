@@ -1,7 +1,13 @@
 # Changelog
 
-[2.5.0] - 2024-06-22
+[2.6.0] - 2024-08-22
+- Added AutoAssign attribute for getting components automatically
+
+[2.5.0] - 2024-08-21
 - Added SceneLoadTrigger component that allows for runtime async load/unload of scenes
+
+[2.4.0] - 2024-08-17
+- Updated material creator for new Uber shader/channel setup
 
 [2.3.0] - 2024-06-22
 - Added HideChildren component
