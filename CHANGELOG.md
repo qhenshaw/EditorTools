@@ -1,5 +1,8 @@
 # Changelog
 
+[2.7.0] - 2024-10-21
+- Added Lightbake Settings component for configuring scene lighting settings more easily
+
 [2.6.0] - 2024-08-22
 - Added AutoAssign attribute for getting components automatically
 
