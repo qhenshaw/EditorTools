@@ -339,7 +339,7 @@ namespace EditorTools.Editor
                 Rigidbody[] childrenRB = gameObject.GetComponentsInChildren<Rigidbody>();
                 toSimulate.AddRange(childrenRB);
             }
-            List<Rigidbody> allRBs = FindObjectsOfType<Rigidbody>().ToList();
+            List<Rigidbody> allRBs = FindObjectsByType<Rigidbody>(FindObjectsSortMode.None).ToList();
             foreach (Rigidbody rb in toSimulate)
             {
                 allRBs.Remove(rb);

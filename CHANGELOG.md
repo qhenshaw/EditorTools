@@ -1,5 +1,9 @@
 # Changelog
 
+[2.7.0] - 2024-11-02
+- Updated find object calls to Unity 6 standards
+- Added helper menu items for surrounding meshes with APV and local box volumes
+
 [2.6.0] - 2024-08-22
 - Added AutoAssign attribute for getting components automatically
 
