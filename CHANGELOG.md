@@ -1,5 +1,8 @@
 # Changelog
 
+[2.8.1] - 2024-12-18
+- Added missing support for Terrains and SkinnedMeshRenderers
+
 [2.8.0] - 2024-11-02
 - Updated find object calls to Unity 6 standards
 - Added helper menu items for surrounding meshes with APV and 

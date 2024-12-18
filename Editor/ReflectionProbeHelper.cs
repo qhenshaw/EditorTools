@@ -19,6 +19,8 @@ namespace EditorTools.Editor
                 ReflectionProbe volume = Undo.AddComponent(gameObject, typeof(ReflectionProbe)) as ReflectionProbe;
                 volume.transform.position = bounds.center;
                 volume.size = bounds.size;
+
+                Debug.Log("Reflection Probe created.");
             }
         }
 
@@ -33,6 +35,8 @@ namespace EditorTools.Editor
                 ProbeVolume volume = Undo.AddComponent(gameObject, typeof(ProbeVolume)) as ProbeVolume;
                 volume.transform.position = bounds.center;
                 volume.size = bounds.size;
+
+                Debug.Log("Probe Volume created.");
             }
         }
 
@@ -51,6 +55,8 @@ namespace EditorTools.Editor
                 volume.blendDistance = 1f;
                 box.transform.position = bounds.center;
                 box.size = bounds.size;
+
+                Debug.Log("Local Post-Processing Volume created.");
             }
         }
     }
