@@ -1,5 +1,8 @@
 # Changelog
 
+[2.8.1] - 2025-01-28
+- Added 'VFS' to uber material menu shortcut
+
 [2.8.1] - 2024-12-18
 - Added missing support for Terrains and SkinnedMeshRenderers
 

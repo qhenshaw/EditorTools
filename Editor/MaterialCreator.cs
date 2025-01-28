@@ -13,7 +13,7 @@ namespace EditorTools.Editor
         private static string[] _textureNames = new[] { "Base Color", "Normal Map", "Mask Map" };
         private static string[] _parameterNames = new[] { "_MainTex", "_Normal", "_Mask" };
 
-        [MenuItem("Assets/Create/Uber material from textures", false, 1)]
+        [MenuItem("Assets/Create/VFS Uber material setup", false, -230)]
         public static void CreateUberMaterial()
         {
             CreateUberMaterial("VFS/Uber");
