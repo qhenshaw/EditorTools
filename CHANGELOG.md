@@ -1,5 +1,9 @@
 # Changelog
 
+[2.9.0] - 2025-02-27
+- Removed redundant prefab swapper
+- Added Service Locator component
+
 [2.8.1] - 2025-01-28
 - Added 'VFS' to uber material menu shortcut
 
